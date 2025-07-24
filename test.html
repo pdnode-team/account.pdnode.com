@@ -27,7 +27,7 @@
 
         if (!jwt) {
             console.log(jwt)
-            window.location.href = "http://localhost:5173/?redirect=" + encodeURIComponent(window.location.href);
+            window.location.href = "http://account.pdnode.com/?redirect=" + encodeURIComponent(window.location.href);
         } else {
             client.setJWT(jwt);
             account.get().then(user => {

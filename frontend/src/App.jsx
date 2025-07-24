@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Client, Account } from "appwrite";
 
 const client = new Client()
   .setEndpoint("https://nyc.cloud.appwrite.io/v1")
   .setProject("68818c2a0030f23462fe");
-// .setDevKey("你的devKey"); // 为安全起见建议从 .env 文件中读取
 
 const account = new Account(client);
 
@@ -16,13 +15,41 @@ function getQueryParam(name) {
 export default function App() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // 初始状态为加载中
   const redirect = getQueryParam("redirect");
+
+  useEffect(() => {
+    // 页面加载后检查是否已有会话
+    const checkSession = async () => {
+      try {
+        await account.get(); // 获取当前会话，如果成功表示已登录
+        const jwtResponse = await account.createJWT();
+
+        await fetch("https://api.account.pdnode.com/api/set-session", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ jwt: jwtResponse.jwt }),
+        });
+
+        window.location.href = redirect || "/";
+      } catch (err) {
+        // 没有会话，允许用户登录
+        console.log("未检测到会话，等待用户登录");
+        console.log(err);
+
+        setLoading(false);
+      }
+    };
+
+    checkSession();
+  }, [redirect]);
 
   const login = async () => {
     setLoading(true);
     try {
-      await account.deleteSessions();
       await account.createEmailPasswordSession(email, password);
 
       const jwtResponse = await account.createJWT();
@@ -40,10 +67,19 @@ export default function App() {
     } catch (err) {
       alert("登录失败，请检查账号密码。");
       console.error(err);
-    } finally {
       setLoading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.card}>
+          <h2 style={styles.title}>🕐 正在检查会话...</h2>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container}>
@@ -75,6 +111,8 @@ export default function App() {
     </div>
   );
 }
+
+// 样式略（不变）
 
 const styles = {
   container: {
