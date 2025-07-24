@@ -27,7 +27,7 @@
 
         if (!jwt) {
             console.log(jwt)
-            // window.location.href = "http://localhost:5173/?redirect=" + encodeURIComponent(window.location.href);
+            window.location.href = "http://localhost:5173/?redirect=" + encodeURIComponent(window.location.href);
         } else {
             client.setJWT(jwt);
             account.get().then(user => {
@@ -35,7 +35,7 @@
             }).catch(() => {
                 document.getElementById("user-info").innerText = "Session invalid. Redirecting to login...";
                 setTimeout(() => {
-                    window.location.href = "http://localhost:5173/login?redirect=" + encodeURIComponent(window.location.href);
+                    window.location.href = "http://localhost:5173/?redirect=" + encodeURIComponent(window.location.href);
                 }, 1000);
             });
         }
