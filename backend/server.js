@@ -2,14 +2,36 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 
+require("dotenv").config();
+
 const app = express();
 app.use(cookieParser());
+
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",") // 多个用逗号分隔
+  : ["https://account.pdnode.com"];
+
 app.use(
   cors({
-    origin: "https://account.pdnode.com", // 你的前端地址，修改为实际
+    origin: function (origin, callback) {
+      console.log("CORS origin:", origin);
+      console.log("Allowed origins:", allowedOrigins);
+
+      if (!origin) {
+        // 非浏览器或无 Origin 请求，直接允许
+        return callback(null, true);
+      }
+
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
+
 app.use(express.json());
 
 app.post("/api/set-session", (req, res) => {
@@ -19,19 +41,27 @@ app.post("/api/set-session", (req, res) => {
     return res.status(400).json({ error: "Missing JWT" });
   }
 
-  // 设置 HttpOnly、Secure、SameSite=None 的 Cookie，适用于跨站点
+  const cookieDomain = process.env.COOKIE_DOMAIN || undefined;
+  const cookieSecure = process.env.COOKIE_SECURE === "true";
+  const cookieSameSite = process.env.COOKIE_SAMESITE || "None";
+  const cookieMaxAge = process.env.COOKIE_MAXAGE
+    ? parseInt(process.env.COOKIE_MAXAGE, 10)
+    : 7 * 24 * 60 * 60 * 1000; // 默认7天
+
   res.cookie("pdnode_jwt", jwt, {
-    // httpOnly: true,
-    secure: true,
-    sameSite: "None",
+    // httpOnly 也可以用环境变量控制
+    httpOnly: process.env.COOKIE_HTTPONLY !== "false",
+    secure: cookieSecure,
+    sameSite: cookieSameSite,
     path: "/",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7天
-    domain: "pdnode.com", // 注意：Cookie 的 domain 需要与你访问的域匹配，否则 Cookie 不会被浏览器保存
+    maxAge: cookieMaxAge,
+    domain: cookieDomain,
   });
 
   res.json({ success: true });
 });
 
-app.listen(25562, () => {
-  console.log("JWT server running on http://localhost:25562");
+const PORT = process.env.PORT || 25562;
+app.listen(PORT, () => {
+  console.log(`JWT server running on http://localhost:${PORT}`);
 });
