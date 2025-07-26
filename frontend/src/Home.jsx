@@ -142,6 +142,11 @@ export default function Home() {
     console.log("Name updated to:", name);
   };
 
+  const logout = async () => {
+    await account.deleteSession("current");
+    window.location.reload();
+  };
+
   const updateEmail = () => {
     setEmailDisabled(true);
 
@@ -315,7 +320,9 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="card placeholder">Other page content placeholder</div>
+        <div className="card placeholder">
+          <p onClick={() => logout()}>Logout</p>
+        </div>
       </div>
 
       {showEmailModal && (

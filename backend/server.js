@@ -61,6 +61,10 @@ app.post("/api/set-session", (req, res) => {
   res.json({ success: true });
 });
 
+app.get("ping", (req, res) => {
+  res.status(200).json({ success: true });
+});
+
 const PORT = process.env.PORT || 25562;
 app.listen(PORT, () => {
   console.log(`JWT server running on http://localhost:${PORT}`);
